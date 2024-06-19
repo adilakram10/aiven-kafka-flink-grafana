@@ -45,7 +45,7 @@ Welcome to the Aiven cloud demo environment where you’ll produce sample JSON d
 
 [![Application Data flow with Kafka connect](https://github.com/adilakram10/aiven-kafka-flink-grafana/blob/main/images/Image1.png)](https://github.com/adilakram10/aiven-kafka-flink-grafana/blob/main/images/Image1.png)
 
-[![Application Data flow with Kafka connect](https://github.com/adilakram10/aiven-kafka-flink-grafana/blob/main/images/Image1.png)](https://github.com/adilakram10/aiven-kafka-flink-grafana/blob/main/images/image2.png)
+[![Application Data flow without Kafka connect](https://github.com/adilakram10/aiven-kafka-flink-grafana/blob/main/images/Image1.png)](https://github.com/adilakram10/aiven-kafka-flink-grafana/blob/main/images/image2.png)
 
 ## **Steps to Implement**
 
