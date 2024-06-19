@@ -1,9 +1,6 @@
 
 # Integrate Kafka with Flink and Grafana | Aiven for Building Data Processing and Streaming pipeline application 
 
-
-
-
 ## **Summary**
 
 Simplify the flow of your data from Aiven for Kafka to Flink to Grafana effortlessly to enhance application monitoring, analytics, search capabilities, and dashboard creation. This guide provides step-by-step instructions for building a streaming and data processing application with real-time ingestion using Kafka Connect and M3DB on the Aiven Platform, utilizing a straightforward Python client application on Aiven, and ultimately visualizing the data by integrating with Flink and Grafana.
@@ -48,7 +45,7 @@ Welcome to the Aiven cloud demo environment where you’ll produce sample JSON d
 
 ## **Steps to Implement**
 
-1. **Produce messages to Aiven Kafka**
+1. ### **Produce messages to Aiven Kafka**
     
     1.1. Create a topic using Aiven client:In order to create a topic, you’ll need to install and login through aiven client CLI in your terminal. (Note: Replication factor must be set to at least two.)
 
@@ -62,48 +59,53 @@ Welcome to the Aiven cloud demo environment where you’ll produce sample JSON d
    ```
 
 
-2. **Aiven for Apache Flink - Data transformation using SQL**
+2. ### **Aiven for Apache Flink - Data transformation using SQL**
  
     Here we will demonstrate how to filter the data into multiple topics using Aiven Flink. This is accomplished by implementing a data processing pipeline by creating SQL applications with source and sink tables, and transforming SQL to filter the data writing to multiple destination topics.
 
-    2.1. Go to the Aiven console and create service for Flink.
+    2.1. **Go to the Aiven console and create service for Flink**
 
     ```
     python3 -m pip install aiven-client
     export PATH=/Users/admin/Library/Python/3.9/bin:$PATH >> ~/.zshrc
     avn user login
     avn service list
-    avn service topic-create kafka-1deff92e sample_topic --partitions 1 --replication 2
+    avn service topic-create $KAFKA_SERVICE $TOPIC_NAME --partitions 1 --replication 2
     ```
 
-    2.2. Integrate Flink with Kafka using the console or CLI using the following commands.
+    2.2. **Integrate Flink with Kafka using the console or CLI using the following commands**
 
     ```
     avn project list   # get the project name 
+    avn service list   # get the kafka and flink service name
+    avn project switch $PROJECTNAME
     avn service integration-create \
-    --project aiven-kafka-flink-grafana \
-    --source-service kafka-1deff92e \
-    --dest-service flink-501f94c \
+    --project $PROJECT_NAME \
+    --source-service $KAFKA_SERVICE \
+    --dest-service $FLINK_SERVICE \
     --integration-type flink \
     ```
 
     2.3. Create topics to write the filtered data from Flink 
     
     ```
-    avn service topic-create kafka-1deff92e sample_topic_filter1 --partitions 1 --replication 2
-    avn service topic-create kafka-1deff92e sample_topic_filter2 --partitions 1 --replication 2
+    avn service list ## Get kafka service name
+    avn service topic-create $KAFKA_SERVICE $TOPIC_NAME1 --partitions 1 --replication 2
+    avn service topic-create $KAFKA_SERVICE $TOPIC_NAME2 --partitions 1 --replication 2
     ```
 
 
-    2.4. Create application data pipeline from the console or via CLI
+    2.4. **Create application data pipeline from the console or via CLI**
 
     ```
-    avn service flink create-application flink-501f94c \
-    --project aiven-kafka-flink-grafana \
-    "{\"name\":\"kafka_flink_app\"}" \
+    avn project list # get project name
+    avn service list  # get flink service name
+    avn service flink create-application $FLINK_SERVICE \
+    --project $PROJECT_NAME \
+    "{\"name\":\"$APP_NAME\"}" \
     ```
     
-    2.5. Add source and sink tables to read and write the data from and to Kafka topic
+    2.5. **Add source and sink tables to read and write the data from and to Kafka topic**
 
     ```
     # SQL Statements 
@@ -115,7 +117,7 @@ Welcome to the Aiven cloud demo environment where you’ll produce sample JSON d
     WITH (
         'connector' = 'kafka',
         'properties.bootstrap.servers' = '',
-        'topic' = 'sample_topic',
+        'topic' = '$TOPIC_NAME',
         'value.format' = 'json',
         'scan.startup.mode' = 'earliest-offset'
         )
@@ -128,7 +130,7 @@ Welcome to the Aiven cloud demo environment where you’ll produce sample JSON d
     WITH (
         'connector' = 'kafka',
         'properties.bootstrap.servers' = '',
-        'topic' = 'sample_topic_filter1',
+        'topic' = '$TOPIC_NAME1',
         'value.format' = 'json',
         'scan.startup.mode' = 'earliest-offset'
         )
@@ -141,13 +143,13 @@ Welcome to the Aiven cloud demo environment where you’ll produce sample JSON d
     WITH (
         'connector' = 'kafka',
         'properties.bootstrap.servers' = '',
-        'topic' = 'sample_topic_filter2',
+        'topic' = '$TOPIC_NAME2',
         'value.format' = 'json',
         'scan.startup.mode' = 'earliest-offset'
         )
     ```
 
-    2.6. Execute the SQL to run data transformations
+    2.6. **Execute the SQL to run data transformations**
     
     create deployment to build the data pipeline application.
     Use **STATEMENT SET** to insert data into multiple tables/topics in a single transaction
@@ -160,16 +162,16 @@ Welcome to the Aiven cloud demo environment where you’ll produce sample JSON d
     END;
     ```
 
-    2.7. Create data pipeline SQL application using CLI(Optional). 
+    2.7. **Create data pipeline SQL application using CLI(Optional).** 
     
     In the above step, we built and executed the data pipeline app using the web console. Here are the steps if you’d like to use the command line interface.
 
 
 ```
-avn service flink create-application-version flink-501f94c     \
-  --project aiven-kafka-flink-grafana                          \
-  --application-id 628ff3a0-9599-490e-b550-e6b1cf9de87c        \
-  "{\"name\":\"kafka_flink_pipeline\"}" \
+avn service flink create-application-version $FLINK_SERVICE     \
+  --project aiven-$PROJECT_NAME                          \
+  --application-id $APPLICATION_ID        \
+  "{\"name\":\"$APP_NAME\"}" \
   """{
     \"sources\": [
       {
@@ -182,7 +184,7 @@ avn service flink create-application-version flink-501f94c     \
                     WITH (                   \
                      'connector' = 'kafka',  \
                     'properties.bootstrap.servers' = '',  \
-                    'topic' = 'sample_topic',  \
+                    'topic' = '$TOPIC_NAME',  \
                     'value.format' = 'json',   \
                     'scan.startup.mode' = 'earliest-offset' \
             )\"
@@ -198,7 +200,7 @@ avn service flink create-application-version flink-501f94c     \
                         WITH (               \
                         'connector' = 'kafka',   \
                         'properties.bootstrap.servers' = '',  \
-                        'topic' = 'sample_topic_filter1',     \
+                        'topic' = '$TOPIC_NAME1',     \
                         'value.format' = 'json',              \
                         'scan.startup.mode' = 'earliest-offset' \
             )\",
@@ -211,7 +213,7 @@ avn service flink create-application-version flink-501f94c     \
                   WITH (                       \
                   'connector' = 'kafka',       \
                   'properties.bootstrap.servers' = '',   \
-                  'topic' = 'sample_topic_filter2',      \
+                  'topic' = '$TOPIC_NAME2',      \
                   'value.format' = 'json',              \
                   'scan.startup.mode' = 'earliest-offset'  \
               )\"
@@ -227,7 +229,7 @@ avn service flink create-application-version flink-501f94c     \
 ```
 
 
-3. **Observability with Grafana using M3DB and Kafka connect**
+3. ### **Observability with Grafana using M3DB and Kafka connect**
 
     In this exercise, we will write data from a Kafka topic to the M3db time-series database using Kafka connect.
 
