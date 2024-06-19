@@ -36,8 +36,6 @@ pip3 install kafka-python
 ```
 
 
-
-
 ## **Solution**
 
 Welcome to the Aiven cloud demo environment where you’ll produce sample JSON data containing UUID as key and sample payload as value using Python to a Kafka topic. We will then bifurcate the data among 2 topics using Flink, and finally integrate it with Grafana to create dashboards for monitoring.
